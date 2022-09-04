@@ -32,5 +32,13 @@ Cognito example in goland
 ## Build and Run locally
 `sops exec-env secrets.enc.yaml 'docker-compose up --build --remove-orphans'`
 
-## Test
+## Testing
+
+### Signup
 `curl localhost:8080/signup -d @user.json`
+
+### Signin
+`curl localhost:8080/signin -d @user.json | jq`
+
+### Verify Token
+`curl localhost:8080/verify -v -H "Authorization: Bearer <id_token>" | jq`

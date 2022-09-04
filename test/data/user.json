@@ -1,4 +1,10 @@
 {
-  "username": "dev2",
-  "password": "!Kafica123456"
+  "username": "dev4",
+  "password": "!Kafica123456",
+  "UserAttributes": [
+    {
+      "Name": "custom:department",
+      "Value": "eng"
+    }
+  ]
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/milennik/gonito/internal/auth"
 	"net/http"
@@ -44,8 +45,9 @@ func main() {
 }
 
 type SignUpRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	UserAttributes []types.AttributeType
 }
 
 func signUp(w http.ResponseWriter, r *http.Request) {
@@ -66,9 +68,10 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 
 	// build a signup request
 	awsReq := &cip.SignUpInput{
-		ClientId: aws.String(cognitoClient.AppClientId),
-		Username: aws.String(req.Username),
-		Password: aws.String(req.Password),
+		ClientId:       aws.String(cognitoClient.AppClientId),
+		Username:       aws.String(req.Username),
+		Password:       aws.String(req.Password),
+		UserAttributes: req.UserAttributes,
 	}
 
 	// make the signup request
@@ -194,9 +197,10 @@ func verifyToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username, _ := token.Get("cognito:username")
+	department, _ := token.Get("custom:department")
 
-	fmt.Printf("The username: %v\n", username)
 	fmt.Println(token)
+	fmt.Printf("Username: %v, Department: %v\n", username, department)
 
 	// Success return 200
 	return
