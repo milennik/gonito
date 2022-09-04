@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/milennik/gonito/pkg/auth"
+	"github.com/milennik/gonito/internal/auth"
 	"net/http"
 	"os"
 	"strings"
