@@ -18,7 +18,7 @@ Cognito example in goland
 - [go get github.com/aws/aws-sdk-go-v2/aws](https://github.com/aws/aws-sdk-go-v2#getting-started)
 - [go get github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2#getting-started)
 - [go get github.com/aws/aws-sdk-go/service/cognitoidentityprovider](https://docs.aws.amazon.com/sdk-for-go/api/service/cognitoidentityprovider/)
-
+- [sops](https://github.com/mozilla/sops)
 
 ## Configuration
 `sops --kms 'arn:aws:kms:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' secrets.enc.yaml `
