@@ -1,4 +1,4 @@
-module github.com/milengithub.com/aws/aws-sdk-go-v2/service/cognitoidentityprovidernik/gonito
+module github.com/milennik/gonito
 
 go 1.18
 
