@@ -47,6 +47,7 @@ func main() {
 type SignUpRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
+	Aud            string `json:"aud"`
 	UserAttributes []types.AttributeType
 }
 
@@ -75,6 +76,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// make the signup request
+	cognitoClient.AppClientId = req.Aud
 	_, err = cognitoClient.SignUp(r.Context(), awsReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -198,9 +200,8 @@ func verifyToken(w http.ResponseWriter, r *http.Request) {
 
 	username, _ := token.Get("cognito:username")
 	department, _ := token.Get("custom:department")
-
-	fmt.Println(token)
-	fmt.Printf("Username: %v, Department: %v\n", username, department)
+	aud, _ := token.Get("aud")
+	fmt.Printf("Username: %v, Department: %v, Audience: %v\n", username, department, aud)
 
 	// Success return 200
 	return

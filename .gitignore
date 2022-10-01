@@ -17,3 +17,12 @@
 .idea
 
 secrets.enc.yaml
+
+# .tfstate files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info*
+.terraform.lock.hcl
+
+# TF Directories
+.terraform/
