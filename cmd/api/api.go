@@ -22,6 +22,12 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger, middleware.WithValue("CognitoClient", cognitoClient))
+
+	r.Group(func(r chi.Router) {
+		r.Use(IsAuth)
+		r.Get("/test", testAuth)
+	})
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("welcome"))
 		if err != nil {
@@ -49,6 +55,57 @@ type SignUpRequest struct {
 	Password       string `json:"password"`
 	Aud            string `json:"aud"`
 	UserAttributes []types.AttributeType
+}
+
+func testAuth(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("testAuth!\n"))
+	return
+}
+
+func IsAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("Ola from middleware!\n"))
+		authHeader := r.Header.Get("Authorization")
+		splitAuthHeader := strings.Split(authHeader, " ")
+		if len(splitAuthHeader) != 2 {
+			http.Error(w, "Missing or invalid authorization header", http.StatusUnauthorized)
+			return
+		}
+
+		// Get client from context
+		cognitoClient, ok := r.Context().Value("CognitoClient").(*auth.CognitoClient)
+		if !ok {
+			http.Error(w, "Could not retrieve CognitoClient from context", http.StatusInternalServerError)
+			return
+		}
+
+		pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
+		formattedURL := fmt.Sprintf(pubKeyURL, os.Getenv("AWS_DEFAULT_REGION"), cognitoClient.UserPoolId)
+
+		keySet, err := jwk.Fetch(r.Context(), formattedURL)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		token, err := jwt.Parse(
+			[]byte(splitAuthHeader[1]),
+			jwt.WithKeySet(keySet),
+			jwt.WithValidate(true),
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		username, _ := token.Get("cognito:username")
+		department, _ := token.Get("custom:department")
+		aud, _ := token.Get("aud")
+		fmt.Printf("Username: %v, Department: %v, Audience: %v\n", username, department, aud)
+
+		// Token is authenticated, pass it through
+		next.ServeHTTP(w, r)
+	})
 }
 
 func signUp(w http.ResponseWriter, r *http.Request) {
