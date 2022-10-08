@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/go-chi/chi/v5"
-	"github.com/milennik/gonito/internal/auth"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/go-chi/chi/v5"
+	"github.com/milennik/gonito/internal/auth"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
