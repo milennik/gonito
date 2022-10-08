@@ -26,17 +26,16 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(IsAuth)
-		r.Get("/test", testAuth)
+
+		r.Post("/signup", signUp)
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("welcome"))
+		_, err := w.Write([]byte("Welcome to the auth servce."))
 		if err != nil {
 			return
 		}
 	})
-
-	r.Post("/signup", signUp)
 
 	r.Post("/signin", signIn)
 
@@ -44,7 +43,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 
-	fmt.Println("starting server!")
+	fmt.Println("Starting auth service.")
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), r)
 	if err != nil {
 		return
@@ -58,25 +57,19 @@ type SignUpRequest struct {
 	UserAttributes []types.AttributeType
 }
 
-func testAuth(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("testAuth!\n"))
-	return
-}
-
 func IsAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("Ola from middleware!\n"))
 		authHeader := r.Header.Get("Authorization")
 		splitAuthHeader := strings.Split(authHeader, " ")
 		if len(splitAuthHeader) != 2 {
-			http.Error(w, "Missing or invalid authorization header", http.StatusUnauthorized)
+			http.Error(w, "Missing or invalid authorization header.", http.StatusUnauthorized)
 			return
 		}
 
 		// Get client from context
 		cognitoClient, ok := r.Context().Value("CognitoClient").(*auth.CognitoClient)
 		if !ok {
-			http.Error(w, "Could not retrieve CognitoClient from context", http.StatusInternalServerError)
+			http.Error(w, "Could not retrieve CognitoClient from context.", http.StatusInternalServerError)
 			return
 		}
 
@@ -104,6 +97,12 @@ func IsAuth(next http.Handler) http.Handler {
 		aud, _ := token.Get("aud")
 		fmt.Printf("Username: %v, Department: %v, Audience: %v\n", username, department, aud)
 
+		if aud != os.Getenv("AUD") {
+			fmt.Printf("Invalid audience %v. Expected audience %v", aud, os.Getenv("AUD"))
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
 		// Token is authenticated, pass it through
 		next.ServeHTTP(w, r)
 	})
@@ -121,7 +120,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	// Get client from context
 	cognitoClient, ok := r.Context().Value("CognitoClient").(*auth.CognitoClient)
 	if !ok {
-		http.Error(w, "Could not retrieve CognitoClient from context", http.StatusInternalServerError)
+		http.Error(w, "Could not retrieve CognitoClient from context.", http.StatusInternalServerError)
 		return
 	}
 
@@ -153,7 +152,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = w.Write([]byte("signup!"))
+	_, err = w.Write([]byte("Successful sign up."))
 	if err != nil {
 		return
 	}
@@ -193,7 +192,7 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 	// Get client from context
 	cognitoClient, ok := r.Context().Value("CognitoClient").(*auth.CognitoClient)
 	if !ok {
-		http.Error(w, "Could not retrieve CognitoClient from context", http.StatusInternalServerError)
+		http.Error(w, "Could not retrieve CognitoClient from context.", http.StatusInternalServerError)
 		return
 	}
 
