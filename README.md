@@ -35,10 +35,10 @@ Cognito example in goland
 ## Testing
 
 ### Signup
-`curl localhost:8080/signup -d @./test/data/user.json`
+`curl localhost:8080/signup -d @./test/data/signup.json`
 
 ### Signin
-`curl localhost:8080/signin -d @./test/data/user.json | jq`
+`curl localhost:8080/signin -d @./test/data/signin.json | jq`
 
 ### Verify Token
 `curl localhost:8080/verify -v -H "Authorization: Bearer <id_token>" | jq`

@@ -1,11 +1,11 @@
 {
-  "username": "dev3",
+  "username": "dev15",
   "password": "!Kafica123456",
-  "aud": "dtol02qcar93df16098pq0cd5",
+  "aud": "3cn1qks1ojhf4qmeh5dil0qhis",
   "UserAttributes": [
     {
       "Name": "custom:department",
-      "Value": "kafica"
+      "Value": "dev"
     }
   ]
 }
