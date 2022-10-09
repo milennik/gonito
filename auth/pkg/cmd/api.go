@@ -19,7 +19,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger, middleware.WithValue("CognitoClient", cognitoClient))
 
-	// Unprotected Endpoints
+	// Public Endpoints
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("Welcome to the auth service."))
 		if err != nil {
@@ -27,16 +27,14 @@ func main() {
 		}
 	})
 	r.Post("/signin", signIn)
-	r.Get("/verify", verifyToken)
-
-	// Protected Endpoints
+	r.Post("/signup", signUp)
+	// Private Endpoints
 	r.Group(func(r chi.Router) {
 		r.Use(IsAuth)
-		r.Post("/signup", signUp)
+		r.Get("/test", testAuth)
 	})
 
 	port := os.Getenv("PORT")
-
 	fmt.Println("Starting auth service.")
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), r)
 	if err != nil {
@@ -46,11 +44,9 @@ func main() {
 
 func IsAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		if auth.ValidateClaims(w, r) {
 			return
 		}
-
 		// Token is authenticated, pass it through
 		next.ServeHTTP(w, r)
 	})
@@ -102,7 +98,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func signIn(w http.ResponseWriter, r *http.Request) {
-	// parse the request body
+
 	var req auth.SignInRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -110,10 +106,8 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get client from context
-	cognitoClient, ok := r.Context().Value("CognitoClient").(*auth.CognitoClient)
-	if !ok {
-		http.Error(w, "Could not retrieve CognitoClient from context.", http.StatusInternalServerError)
+	cognitoClient, _, hasErr := auth.GetCognitoClient(w, r)
+	if hasErr {
 		return
 	}
 
@@ -140,13 +134,7 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(res)
 }
 
-// GET -H "Authorization: Bearer eyXYZ"
-func verifyToken(w http.ResponseWriter, r *http.Request) {
-
-	if auth.ValidateClaims(w, r) {
-		return
-	}
-
-	// Success return 200
+func testAuth(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("Hello from the test endpoint, JWT is valid.\n"))
 	return
 }

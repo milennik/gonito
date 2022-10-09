@@ -1,3 +1,6 @@
+# Gonito
+Cognito example in goland
+
 <p align="center">
   <a href="https://github.com/milennik/gonito/stargazers">
     <img alt="Stars" src="https://img.shields.io/github/stars/milennik/gonito?style=for-the-badge&logo=starship&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41"></a>
@@ -9,9 +12,19 @@
     <img alt="License" src="https://img.shields.io/github/license/milennik/gonito?style=for-the-badge&logo=starship&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41"/></a>
 </p>
 
-# gonito
-Cognito example in goland
+![](gonito.png)
 
+## Auth API `<AUD_1>`
+1. Create user in `Cognito`: 
+   - Public `POST` `localhost:8080/signup`, payload: {`username`, `password`, `audience`, `custom attributes`}.
+2. Sign in to get `JWT`:
+   - Public `POST` `localhost:8080/signin`, payload: {`username`, `password`}.
+3. Test `JWT`:
+   - Private `GET` `localhost:8080/test`
+
+## Test API `<AUD_2>`
+1. Test `JWT`:
+   - Private `GET` `localhost:8080/test`
 
 ## Requirements
 - [go get -u github.com/go-chi/chi/v5](https://github.com/go-chi/chi)
@@ -29,16 +42,23 @@ Cognito example in goland
       COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
 
+Set `AUD` local variable in `docker-compose`.
+
 ## Build and Run locally
 `sops exec-env secrets.enc.yaml 'docker-compose up --build --remove-orphans'`
 
-## Testing
+## Testing the Auth service
 
-### Signup
+###  Private POST `/signup`
 `curl localhost:8080/signup -d @./test/data/signup.json`
 
-### Signin
+###  Public POST `/signin`
 `curl localhost:8080/signin -d @./test/data/signin.json | jq`
 
-### Verify Token
-`curl localhost:8080/verify -v -H "Authorization: Bearer <id_token>" | jq`
+### Private GET `/test`
+`curl localhost:8080/signup -v -H "Authorization: Bearer <id_token>"`
+
+## Testing the Test API
+
+### Private GET `/test`
+`curl localhost:8081/signup -v -H "Authorization: Bearer <id_token>"`

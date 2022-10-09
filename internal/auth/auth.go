@@ -65,7 +65,7 @@ func ParseJWT(w http.ResponseWriter, err error, splitAuthHeader []string, keySet
 		jwt.WithValidate(true),
 	)
 	if err != nil {
-		fmt.Println("Invalid JWT.")
+		fmt.Println("Invalid or expired JWT.")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil, true
 	}
@@ -98,5 +98,6 @@ func ValidateClaims(w http.ResponseWriter, r *http.Request) bool {
 	if CheckClaims(w, token, ok) {
 		return true
 	}
+
 	return false
 }
