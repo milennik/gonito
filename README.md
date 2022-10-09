@@ -14,17 +14,17 @@ Cognito example in goland
 
 ![](gonito.png)
 
-## Auth API `<AUD_1>`
+## Auth API (`AUD_1`)
 1. Create user in `Cognito`: 
    - Public `POST` `localhost:8080/signup`, payload: {`username`, `password`, `audience`, `custom attributes`}.
-2. Sign in to get `JWT`:
+2. Sign in to get a `JWT`:
    - Public `POST` `localhost:8080/signin`, payload: {`username`, `password`}.
 3. Test `JWT`:
    - Private `GET` `localhost:8080/test`
 
-## Test API `<AUD_2>`
+## Test API (`AUD_2`)
 1. Test `JWT`:
-   - Private `GET` `localhost:8080/test`
+   - Private `GET` `localhost:8081/test`
 
 ## Requirements
 - [go get -u github.com/go-chi/chi/v5](https://github.com/go-chi/chi)
