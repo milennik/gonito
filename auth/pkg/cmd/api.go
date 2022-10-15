@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/milennik/gonito/internal/auth"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/milennik/gonito/internal/auth"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -16,52 +17,52 @@ import (
 func main() {
 	cognitoClient := auth.Init()
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger, middleware.WithValue("CognitoClient", cognitoClient))
+	router := chi.NewRouter()
+	router.Use(middleware.Logger, middleware.WithValue("CognitoClient", cognitoClient))
 
 	// Public Endpoints
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("Welcome to the auth service."))
 		if err != nil {
 			return
 		}
 	})
-	r.Post("/signin", signIn)
-	r.Post("/signup", signUp)
+	router.Post("/signin", signIn)
+	router.Post("/signup", signUp)
 	// Private Endpoints
-	r.Group(func(r chi.Router) {
+	router.Group(func(r chi.Router) {
 		r.Use(IsAuth)
 		r.Get("/test", testAuth)
 	})
 
 	port := os.Getenv("PORT")
 	fmt.Println("Starting auth service.")
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), r)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), router)
 	if err != nil {
 		return
 	}
 }
 
 func IsAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if auth.ValidateClaims(w, r) {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if auth.ValidateClaims(writer, request) {
 			return
 		}
 		// Token is authenticated, pass it through
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(writer, request)
 	})
 }
 
-func signUp(w http.ResponseWriter, r *http.Request) {
+func signUp(writer http.ResponseWriter, request *http.Request) {
 
 	var req auth.SignUpRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(request.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	cognitoClient, _, hasErr := auth.GetCognitoClient(w, r)
+	cognitoClient, hasErr := auth.GetCognitoClient(writer, request)
 	if hasErr {
 		return
 	}
@@ -74,9 +75,9 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cognitoClient.AppClientId = req.Aud
-	_, err = cognitoClient.SignUp(r.Context(), awsReq)
+	_, err = cognitoClient.SignUp(request.Context(), awsReq)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -85,28 +86,28 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		Username:   aws.String(req.Username),
 	}
 
-	_, err = cognitoClient.AdminConfirmSignUp(r.Context(), confirmInput)
+	_, err = cognitoClient.AdminConfirmSignUp(request.Context(), confirmInput)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err = w.Write([]byte("Successful sign up."))
+	_, err = writer.Write([]byte("Successful sign up."))
 	if err != nil {
 		return
 	}
 }
 
-func signIn(w http.ResponseWriter, r *http.Request) {
+func signIn(writer http.ResponseWriter, request *http.Request) {
 
 	var req auth.SignInRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(request.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	cognitoClient, _, hasErr := auth.GetCognitoClient(w, r)
+	cognitoClient, hasErr := auth.GetCognitoClient(writer, request)
 	if hasErr {
 		return
 	}
@@ -118,9 +119,9 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 		AuthParameters: map[string]string{"USERNAME": req.Username, "PASSWORD": req.Password},
 	}
 
-	output, err := cognitoClient.AdminInitiateAuth(r.Context(), signInInput)
+	output, err := cognitoClient.AdminInitiateAuth(request.Context(), signInInput)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -131,10 +132,10 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: output.AuthenticationResult.RefreshToken,
 		TokenType:    output.AuthenticationResult.TokenType,
 	}
-	_ = json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(writer).Encode(res)
 }
 
-func testAuth(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("Hello from the test endpoint, JWT is valid.\n"))
+func testAuth(writer http.ResponseWriter, request *http.Request) {
+	_, _ = writer.Write([]byte("Hello from the test endpoint, JWT is valid.\n"))
 	return
 }
